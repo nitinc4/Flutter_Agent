@@ -8,13 +8,15 @@ interface EditorProps {
   activeFile: File | null;
   onFileClose: (filePath: string) => void;
   onFileSelect: (file: File) => void;
+  onFileChange: (filePath: string, content: string) => void;
 }
 
 const Editor: React.FC<EditorProps> = ({ 
   openFiles, 
   activeFile, 
   onFileClose,
-  onFileSelect
+  onFileSelect,
+  onFileChange
 }) => {
   if (openFiles.length === 0) {
     return (
@@ -30,10 +32,10 @@ const Editor: React.FC<EditorProps> = ({
     );
   }
 
-  const getDartSyntaxHighlighting = (content: string): string => {
-    // This is a very basic implementation
-    // In a real application, you would use a proper syntax highlighter
-    return content;
+  const handleContentChange = (content: string) => {
+    if (activeFile) {
+      onFileChange(activeFile.path, content);
+    }
   };
 
   return (
@@ -66,6 +68,7 @@ const Editor: React.FC<EditorProps> = ({
             language={activeFile.path.endsWith('.dart') ? 'dart' : 
                      activeFile.path.endsWith('.yaml') ? 'yaml' : 
                      activeFile.path.endsWith('.md') ? 'markdown' : 'text'}
+            onChange={handleContentChange}
           />
         )}
       </div>

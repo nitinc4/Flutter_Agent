@@ -1,15 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Smartphone, Tablet, Laptop, RefreshCw } from 'lucide-react';
+import { File } from '../types';
 
 type DeviceType = 'mobile' | 'tablet' | 'desktop';
 
-const Preview: React.FC = () => {
+interface PreviewProps {
+  activeFile: File | null;
+}
+
+const Preview: React.FC<PreviewProps> = ({ activeFile }) => {
   const [deviceType, setDeviceType] = useState<DeviceType>('mobile');
   const [isLoading, setIsLoading] = useState(false);
+  const [previewContent, setPreviewContent] = useState<string>('');
+
+  useEffect(() => {
+    if (activeFile?.path.endsWith('.dart')) {
+      // Simulate Flutter hot reload
+      setIsLoading(true);
+      setTimeout(() => {
+        setPreviewContent(activeFile.content);
+        setIsLoading(false);
+      }, 500);
+    }
+  }, [activeFile?.content]);
 
   const handleRefresh = () => {
     setIsLoading(true);
-    // Simulate refresh delay
     setTimeout(() => {
       setIsLoading(false);
     }, 1000);

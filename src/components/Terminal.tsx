@@ -7,89 +7,131 @@ const Terminal: React.FC = () => {
     ''
   ]);
   const [input, setInput] = useState('');
+  const [commandHistory, setCommandHistory] = useState<string[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
   const terminalRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    // Scroll to bottom whenever history changes
     if (terminalRef.current) {
       terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
     }
   }, [history]);
 
   useEffect(() => {
-    // Focus input when component mounts
     if (inputRef.current) {
       inputRef.current.focus();
     }
   }, []);
 
-  const handleCommand = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && input.trim()) {
-      const command = input.trim();
-      
-      // Mock terminal responses
-      let response: string[] = [];
-      
-      if (command === 'help') {
-        response = [
-          'Available commands:',
-          '  help - Show this help message',
-          '  flutter create <name> - Create a new Flutter project',
-          '  flutter run - Run the current Flutter project',
-          '  flutter build web - Build the Flutter project for web',
-          '  clear - Clear the terminal'
-        ];
-      } else if (command === 'clear') {
-        setHistory(['']);
-        setInput('');
-        return;
-      } else if (command.startsWith('flutter create')) {
-        response = [
-          'Creating a new Flutter project...',
-          'Project created successfully!'
-        ];
-      } else if (command === 'flutter run') {
-        response = [
-          'Building Flutter application...',
-          'Running on web server at http://localhost:8080',
-          'Application running.'
-        ];
-      } else if (command === 'flutter build web') {
-        response = [
-          'Building for web...',
-          'Compiling dart to JavaScript...',
-          'Build completed successfully!',
-          'Output files written to build/web/'
-        ];
-      } else {
-        response = [`Command not found: ${command}. Type "help" for available commands.`];
-      }
-      
-      setHistory(prev => [...prev, `$ ${command}`, ...response, '']);
+  const handleCommand = (command: string) => {
+    if (!command.trim()) return;
+
+    // Add command to history
+    setCommandHistory(prev => [...prev, command]);
+    setHistoryIndex(-1);
+
+    // Mock terminal responses
+    let response: string[] = [];
+    
+    if (command === 'help') {
+      response = [
+        'Available commands:',
+        '  help            - Show this help message',
+        '  clear          - Clear the terminal',
+        '  flutter create - Create a new Flutter project',
+        '  flutter run    - Run the current Flutter project',
+        '  flutter build  - Build the Flutter project',
+        '  flutter test   - Run Flutter tests',
+        '  flutter doctor - Show information about the Flutter installation',
+        '  cd <dir>       - Change directory',
+        '  ls             - List directory contents',
+        '  pwd            - Print working directory'
+      ];
+    } else if (command === 'clear') {
+      setHistory(['']);
       setInput('');
-
-      // Ensure input stays focused after command execution
-      if (inputRef.current) {
-        inputRef.current.focus();
-      }
+      return;
+    } else if (command.startsWith('flutter create')) {
+      response = [
+        'Creating a new Flutter project...',
+        'Project created successfully!',
+        '  cd project_name',
+        '  flutter run    - To run your application',
+        '  flutter test   - To run Flutter tests',
+        '  flutter build  - To build your application'
+      ];
+    } else if (command === 'flutter run') {
+      response = [
+        'Launching Flutter application...',
+        'Running "flutter pub get" in project directory...',
+        'Resolving dependencies...',
+        'Got dependencies!',
+        'Compiling for the web...',
+        'App running on http://localhost:8080'
+      ];
+    } else if (command === 'flutter doctor') {
+      response = [
+        'Doctor summary (to see all details, run flutter doctor -v):',
+        '[✓] Flutter (Channel stable, 3.19.0)',
+        '[✓] Chrome - version 121.0.6167.161',
+        '[✓] VS Code (version 1.86.0)',
+        '[✓] HTTP Host Availability',
+        '• No issues found!'
+      ];
+    } else if (command === 'pwd') {
+      response = ['/home/project'];
+    } else if (command === 'ls') {
+      response = [
+        'lib/',
+        'test/',
+        'web/',
+        'pubspec.yaml',
+        'README.md',
+        'analysis_options.yaml'
+      ];
+    } else {
+      response = [`Command not found: ${command}. Type "help" for available commands.`];
     }
-  };
+    
+    setHistory(prev => [...prev, `$ ${command}`, ...response, '']);
+    setInput('');
 
-  const handleTerminalClick = () => {
-    // Focus input when terminal is clicked
     if (inputRef.current) {
       inputRef.current.focus();
     }
   };
 
-  // Prevent losing focus when pressing Tab
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Tab') {
+    if (e.key === 'Enter') {
+      handleCommand(input);
+    } else if (e.key === 'Tab') {
       e.preventDefault();
-      // Here you could implement command completion if desired
+      // Command completion could be implemented here
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (commandHistory.length > 0 && historyIndex < commandHistory.length - 1) {
+        const newIndex = historyIndex + 1;
+        setHistoryIndex(newIndex);
+        setInput(commandHistory[commandHistory.length - 1 - newIndex]);
+      }
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (historyIndex > 0) {
+        const newIndex = historyIndex - 1;
+        setHistoryIndex(newIndex);
+        setInput(commandHistory[commandHistory.length - 1 - newIndex]);
+      } else if (historyIndex === 0) {
+        setHistoryIndex(-1);
+        setInput('');
+      }
     }
-    handleCommand(e);
+  };
+
+  const handleTerminalClick = () => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
   };
 
   return (

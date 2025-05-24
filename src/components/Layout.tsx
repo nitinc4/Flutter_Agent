@@ -14,8 +14,14 @@ const Layout: React.FC = () => {
   const [activeFile, setActiveFile] = useState<File | null>(null);
   const [terminalOpen, setTerminalOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(true);
+  const [files, setFiles] = useState<Record<string, File>>({});
 
   const handleFileOpen = (file: File) => {
+    setFiles(prev => ({
+      ...prev,
+      [file.path]: file
+    }));
+    
     if (!openFiles.some(f => f.path === file.path)) {
       setOpenFiles([...openFiles, file]);
     }
@@ -28,6 +34,28 @@ const Layout: React.FC = () => {
     
     if (activeFile?.path === filePath) {
       setActiveFile(newOpenFiles.length > 0 ? newOpenFiles[newOpenFiles.length - 1] : null);
+    }
+  };
+
+  const handleFileChange = (filePath: string, content: string) => {
+    const updatedFile = {
+      ...files[filePath],
+      content
+    };
+    
+    setFiles(prev => ({
+      ...prev,
+      [filePath]: updatedFile
+    }));
+    
+    setOpenFiles(prev => 
+      prev.map(file => 
+        file.path === filePath ? updatedFile : file
+      )
+    );
+    
+    if (activeFile?.path === filePath) {
+      setActiveFile(updatedFile);
     }
   };
 
@@ -65,6 +93,7 @@ const Layout: React.FC = () => {
                 activeFile={activeFile} 
                 onFileClose={handleFileClose}
                 onFileSelect={setActiveFile}
+                onFileChange={handleFileChange}
               />
             </Resizable>
             
@@ -76,7 +105,7 @@ const Layout: React.FC = () => {
                 maxSize={70}
                 className="overflow-hidden"
               >
-                <Preview />
+                <Preview activeFile={activeFile} />
               </Resizable>
             )}
           </div>
@@ -100,4 +129,4 @@ const Layout: React.FC = () => {
 
 export default Layout;
 
-export { Layout }
+export { Layout };

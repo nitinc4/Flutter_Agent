@@ -1,26 +1,26 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 interface CodeMirrorEditorProps {
   content: string;
   language: string;
+  onChange?: (content: string) => void;
 }
 
-// This is a mock implementation of a code editor
-// In a real application, you would use a library like Monaco Editor or CodeMirror
-const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({ content, language }) => {
-  const editorRef = useRef<HTMLDivElement>(null);
+const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({ content, language, onChange }) => {
+  const [editorContent, setEditorContent] = useState(content);
+  const editorRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    // In a real implementation, we would initialize the code editor here
-    if (editorRef.current) {
-      // For this mock, we're just showing formatted code with basic styles
-      editorRef.current.innerHTML = formatCode(content, language);
-    }
-  }, [content, language]);
+    setEditorContent(content);
+  }, [content]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newContent = e.target.value;
+    setEditorContent(newContent);
+    onChange?.(newContent);
+  };
 
   const formatCode = (code: string, lang: string): string => {
-    // Basic syntax highlighting simulation
-    // Replace this with a real syntax highlighter in a production app
     let formattedCode = code
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
@@ -33,7 +33,6 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({ content, language }
 
   const highlightSyntax = (line: string, lang: string): string => {
     if (lang === 'dart') {
-      // Very basic Dart syntax highlighting
       return line
         .replace(/(class|void|final|const|var|extends|StatelessWidget|StatefulWidget|Widget|BuildContext|override|return|import|package|if|else|for|while|switch|case|break|continue|new|this|super|@required)/g, '<span class="keyword">$1</span>')
         .replace(/(\'.*?\'|\".*?\")/g, '<span class="string">$1</span>')
@@ -48,23 +47,31 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({ content, language }
         .replace(/^(#+\s+)(.*)$/g, '<span class="keyword">$1</span><span class="title">$2</span>')
         .replace(/(\*\*.*?\*\*)/g, '<span class="bold">$1</span>');
     }
-    
     return line;
   };
 
   return (
-    <div className="h-full bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 font-mono text-sm overflow-auto p-4">
+    <div className="h-full bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 font-mono text-sm relative">
+      <textarea
+        ref={editorRef}
+        value={editorContent}
+        onChange={handleChange}
+        className="absolute inset-0 w-full h-full bg-transparent text-inherit font-inherit p-4 resize-none outline-none"
+        spellCheck={false}
+        autoCapitalize="off"
+        autoComplete="off"
+        wrap="off"
+      />
       <div 
-        ref={editorRef} 
-        className="editor"
-        style={{
-          fontFamily: 'Menlo, Monaco, "Courier New", monospace',
-          lineHeight: '1.5',
+        className="absolute inset-0 pointer-events-none p-4"
+        dangerouslySetInnerHTML={{ 
+          __html: formatCode(editorContent, language) 
         }}
       />
       <style jsx>{`
-        .editor {
-          white-space: pre;
+        textarea {
+          font-family: Menlo, Monaco, "Courier New", monospace;
+          line-height: 1.5;
           tab-size: 2;
         }
         .line-number {
@@ -79,26 +86,12 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({ content, language }
           padding-left: 0.5rem;
           border-left: 1px solid #ddd;
         }
-        .keyword {
-          color: #07a;
-        }
-        .string {
-          color: #690;
-        }
-        .number {
-          color: #905;
-        }
-        .comment {
-          color: #999;
-          font-style: italic;
-        }
-        .title {
-          color: #07a;
-          font-weight: bold;
-        }
-        .bold {
-          font-weight: bold;
-        }
+        .keyword { color: #07a; }
+        .string { color: #690; }
+        .number { color: #905; }
+        .comment { color: #999; font-style: italic; }
+        .title { color: #07a; font-weight: bold; }
+        .bold { font-weight: bold; }
       `}</style>
     </div>
   );
