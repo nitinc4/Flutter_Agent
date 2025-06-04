@@ -11,11 +11,11 @@ interface PreviewProps {
 const Preview: React.FC<PreviewProps> = ({ activeFile }) => {
   const [deviceType, setDeviceType] = useState<DeviceType>('mobile');
   const [isLoading, setIsLoading] = useState(false);
+  const [counter, setCounter] = useState(0);
   const [previewContent, setPreviewContent] = useState<string>('');
 
   useEffect(() => {
     if (activeFile?.path.endsWith('.dart')) {
-      // Simulate Flutter hot reload
       setIsLoading(true);
       setTimeout(() => {
         setPreviewContent(activeFile.content);
@@ -29,6 +29,10 @@ const Preview: React.FC<PreviewProps> = ({ activeFile }) => {
     setTimeout(() => {
       setIsLoading(false);
     }, 1000);
+  };
+
+  const handleIncrement = () => {
+    setCounter(prev => prev + 1);
   };
 
   const getDeviceStyles = () => {
@@ -81,7 +85,7 @@ const Preview: React.FC<PreviewProps> = ({ activeFile }) => {
       
       <div className="flex-1 flex items-center justify-center overflow-auto p-4">
         <div className={`border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden bg-white dark:bg-black ${getDeviceStyles()} relative`}>
-          {/* Mock Flutter App Preview */}
+          {/* Interactive Flutter App Preview */}
           <div className="w-full h-full flex flex-col">
             {/* App Bar */}
             <div className="bg-blue-500 text-white p-4 flex items-center">
@@ -91,7 +95,7 @@ const Preview: React.FC<PreviewProps> = ({ activeFile }) => {
             {/* App Content */}
             <div className="flex-1 flex flex-col items-center justify-center p-4">
               <p className="text-center mb-2">You have pushed the button this many times:</p>
-              <p className="text-4xl font-bold mb-8">0</p>
+              <p className="text-4xl font-bold mb-8">{counter}</p>
               
               {/* Example Flutter Widgets */}
               <div className="w-full space-y-4 max-w-sm">
@@ -109,7 +113,10 @@ const Preview: React.FC<PreviewProps> = ({ activeFile }) => {
             
             {/* Floating Action Button */}
             <div className="absolute bottom-4 right-4">
-              <button className="w-14 h-14 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-lg">
+              <button 
+                className="w-14 h-14 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-lg hover:bg-blue-600 active:bg-blue-700 transition-colors"
+                onClick={handleIncrement}
+              >
                 <span className="text-2xl">+</span>
               </button>
             </div>

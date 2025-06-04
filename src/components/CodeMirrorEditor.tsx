@@ -1,4 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
+import CodeMirror from '@uiw/react-codemirror';
+import { javascript } from '@codemirror/lang-javascript';
+import { vscodeDark } from '@uiw/codemirror-theme-vscode';
+import { useTheme } from '../context/ThemeContext';
 
 interface CodeMirrorEditorProps {
   content: string;
@@ -7,92 +11,57 @@ interface CodeMirrorEditorProps {
 }
 
 const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({ content, language, onChange }) => {
-  const [editorContent, setEditorContent] = useState(content);
-  const editorRef = useRef<HTMLTextAreaElement>(null);
+  const { theme } = useTheme();
 
-  useEffect(() => {
-    setEditorContent(content);
-  }, [content]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newContent = e.target.value;
-    setEditorContent(newContent);
-    onChange?.(newContent);
-  };
-
-  const formatCode = (code: string, lang: string): string => {
-    let formattedCode = code
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .split('\n')
-      .map((line, i) => `<span class="line-number">${i + 1}</span><span class="line-content">${highlightSyntax(line, lang)}</span>`)
-      .join('\n');
-
-    return formattedCode;
-  };
-
-  const highlightSyntax = (line: string, lang: string): string => {
-    if (lang === 'dart') {
-      return line
-        .replace(/(class|void|final|const|var|extends|StatelessWidget|StatefulWidget|Widget|BuildContext|override|return|import|package|if|else|for|while|switch|case|break|continue|new|this|super|@required)/g, '<span class="keyword">$1</span>')
-        .replace(/(\'.*?\'|\".*?\")/g, '<span class="string">$1</span>')
-        .replace(/(\d+)/g, '<span class="number">$1</span>')
-        .replace(/(\/\/.*)/g, '<span class="comment">$1</span>');
-    } else if (lang === 'yaml') {
-      return line
-        .replace(/^(\s*)([\w\-]+):/g, '$1<span class="keyword">$2</span>:')
-        .replace(/(\'.*?\'|\".*?\")/g, '<span class="string">$1</span>');
-    } else if (lang === 'markdown') {
-      return line
-        .replace(/^(#+\s+)(.*)$/g, '<span class="keyword">$1</span><span class="title">$2</span>')
-        .replace(/(\*\*.*?\*\*)/g, '<span class="bold">$1</span>');
+  const getLanguageExtension = (lang: string) => {
+    switch (lang) {
+      case 'dart':
+        return javascript(); // Using JavaScript highlighting for Dart until we add a proper Dart extension
+      case 'yaml':
+        return javascript({ jsx: false }); // Basic highlighting for YAML
+      case 'markdown':
+        return javascript({ jsx: false }); // Basic highlighting for Markdown
+      default:
+        return javascript();
     }
-    return line;
   };
 
   return (
-    <div className="h-full bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 font-mono text-sm relative">
-      <textarea
-        ref={editorRef}
-        value={editorContent}
-        onChange={handleChange}
-        className="absolute inset-0 w-full h-full bg-transparent text-inherit font-inherit p-4 resize-none outline-none"
-        spellCheck={false}
-        autoCapitalize="off"
-        autoComplete="off"
-        wrap="off"
-      />
-      <div 
-        className="absolute inset-0 pointer-events-none p-4"
-        dangerouslySetInnerHTML={{ 
-          __html: formatCode(editorContent, language) 
+    <div className="h-full w-full" data-file={language === 'dart' ? 'main.dart' : language === 'yaml' ? 'pubspec.yaml' : ''}>
+      <CodeMirror
+        value={content}
+        height="100%"
+        theme={theme === 'dark' ? vscodeDark : undefined}
+        extensions={[getLanguageExtension(language)]}
+        onChange={onChange}
+        basicSetup={{
+          lineNumbers: true,
+          highlightActiveLineGutter: true,
+          highlightSpecialChars: true,
+          history: true,
+          foldGutter: true,
+          drawSelection: true,
+          dropCursor: true,
+          allowMultipleSelections: true,
+          indentOnInput: true,
+          syntaxHighlighting: true,
+          bracketMatching: true,
+          closeBrackets: true,
+          autocompletion: true,
+          rectangularSelection: true,
+          crosshairCursor: true,
+          highlightActiveLine: true,
+          highlightSelectionMatches: true,
+          closeBracketsKeymap: true,
+          defaultKeymap: true,
+          searchKeymap: true,
+          historyKeymap: true,
+          foldKeymap: true,
+          completionKeymap: true,
+          lintKeymap: true,
         }}
+        className="h-full"
       />
-      <style jsx>{`
-        textarea {
-          font-family: Menlo, Monaco, "Courier New", monospace;
-          line-height: 1.5;
-          tab-size: 2;
-        }
-        .line-number {
-          display: inline-block;
-          width: 3rem;
-          text-align: right;
-          color: #888;
-          padding-right: 1rem;
-          user-select: none;
-        }
-        .line-content {
-          padding-left: 0.5rem;
-          border-left: 1px solid #ddd;
-        }
-        .keyword { color: #07a; }
-        .string { color: #690; }
-        .number { color: #905; }
-        .comment { color: #999; font-style: italic; }
-        .title { color: #07a; font-weight: bold; }
-        .bold { font-weight: bold; }
-      `}</style>
     </div>
   );
 };

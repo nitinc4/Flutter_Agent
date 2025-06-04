@@ -27,11 +27,9 @@ const Terminal: React.FC = () => {
   const handleCommand = (command: string) => {
     if (!command.trim()) return;
 
-    // Add command to history
     setCommandHistory(prev => [...prev, command]);
     setHistoryIndex(-1);
 
-    // Mock terminal responses
     let response: string[] = [];
     
     if (command === 'help') {
@@ -52,16 +50,7 @@ const Terminal: React.FC = () => {
       setHistory(['']);
       setInput('');
       return;
-    } else if (command.startsWith('flutter create')) {
-      response = [
-        'Creating a new Flutter project...',
-        'Project created successfully!',
-        '  cd project_name',
-        '  flutter run    - To run your application',
-        '  flutter test   - To run Flutter tests',
-        '  flutter build  - To build your application'
-      ];
-    } else if (command === 'flutter run') {
+    } else if (command.startsWith('flutter run')) {
       response = [
         'Launching Flutter application...',
         'Running "flutter pub get" in project directory...',
@@ -151,7 +140,7 @@ const Terminal: React.FC = () => {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="flex-1 bg-transparent outline-none border-none caret-white"
+          className="flex-1 bg-transparent outline-none border-none caret-white terminal-input"
           autoFocus
           spellCheck={false}
           autoComplete="off"
