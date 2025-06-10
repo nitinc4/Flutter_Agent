@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useTheme } from '../context/ThemeContext';
-import Sidebar from './Sidebar';
+import FlutterSidebar from './FlutterSidebar';
 import Editor from './Editor';
-import Preview from './Preview';
-import Terminal from './Terminal';
+import FlutterPreview from './FlutterPreview';
+import FlutterTerminal from './FlutterTerminal';
 import Header from './Header';
 import { Resizable } from './Resizable';
 import { File } from '../types';
+import { getTemplate } from '../utils/flutterTemplates';
 
 const Layout: React.FC = () => {
   const { theme } = useTheme();
@@ -15,6 +16,7 @@ const Layout: React.FC = () => {
   const [terminalOpen, setTerminalOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(true);
   const [files, setFiles] = useState<Record<string, File>>({});
+  const [compilationResult, setCompilationResult] = useState<any>(null);
 
   const handleFileOpen = (file: File) => {
     setFiles(prev => ({
@@ -59,12 +61,58 @@ const Layout: React.FC = () => {
     }
   };
 
+  const handleProjectCreate = (templateName: string) => {
+    const template = getTemplate(templateName);
+    if (!template) return;
+
+    // Clear existing files
+    setFiles({});
+    setOpenFiles([]);
+    setActiveFile(null);
+
+    // Load template files
+    const templateFiles: Record<string, File> = {};
+    Object.entries(template.files).forEach(([path, content]) => {
+      const fileName = path.split('/').pop() || path;
+      templateFiles[path] = {
+        name: fileName,
+        path,
+        type: 'file',
+        content
+      };
+    });
+
+    setFiles(templateFiles);
+
+    // Open main.dart by default
+    const mainFile = templateFiles['lib/main.dart'];
+    if (mainFile) {
+      setOpenFiles([mainFile]);
+      setActiveFile(mainFile);
+    }
+
+    // Show success notification
+    const notification = document.createElement('div');
+    notification.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg z-50';
+    notification.textContent = `${template.name} template loaded successfully!`;
+    document.body.appendChild(notification);
+    setTimeout(() => document.body.removeChild(notification), 3000);
+  };
+
   const toggleTerminal = () => {
     setTerminalOpen(!terminalOpen);
   };
 
   const togglePreview = () => {
     setPreviewOpen(!previewOpen);
+  };
+
+  const handleFileSave = () => {
+    if (activeFile) {
+      // Auto-save is already handled in handleFileChange
+      // This could trigger additional save actions like formatting
+      console.log('File saved:', activeFile.path);
+    }
   };
 
   return (
@@ -77,7 +125,10 @@ const Layout: React.FC = () => {
       />
       
       <div className="flex flex-1 overflow-hidden">
-        <Sidebar onFileSelect={handleFileOpen} />
+        <FlutterSidebar 
+          onFileSelect={handleFileOpen} 
+          onProjectCreate={handleProjectCreate}
+        />
         
         <div className="flex flex-1 flex-col">
           <div className="flex flex-1 overflow-hidden">
@@ -94,6 +145,7 @@ const Layout: React.FC = () => {
                 onFileClose={handleFileClose}
                 onFileSelect={setActiveFile}
                 onFileChange={handleFileChange}
+                onSave={handleFileSave}
               />
             </Resizable>
             
@@ -105,7 +157,10 @@ const Layout: React.FC = () => {
                 maxSize={70}
                 className="overflow-hidden"
               >
-                <Preview activeFile={activeFile} />
+                <FlutterPreview 
+                  activeFile={activeFile} 
+                  allFiles={files}
+                />
               </Resizable>
             )}
           </div>
@@ -118,7 +173,10 @@ const Layout: React.FC = () => {
               maxSize={50}
               className="overflow-hidden"
             >
-              <Terminal />
+              <FlutterTerminal 
+                onCompilationResult={setCompilationResult}
+                currentFiles={files}
+              />
             </Resizable>
           )}
         </div>

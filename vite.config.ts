@@ -5,6 +5,18 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   optimizeDeps: {
-    exclude: ['lucide-react'],
+    exclude: [
+      'lucide-react',
+      '@codemirror/state',
+      '@codemirror/view',
+      '@codemirror/lang-javascript',
+      '@codemirror/lang-typescript',
+      '@codemirror/lang-dart',
+      '@codemirror/theme-one-dark',
+      '@codemirror/commands',
+      '@codemirror/search',
+      '@codemirror/autocomplete',
+      '@codemirror/lint'
+    ],
   },
 });
